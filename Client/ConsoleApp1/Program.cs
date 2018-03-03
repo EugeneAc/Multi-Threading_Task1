@@ -47,9 +47,19 @@ namespace Client
 
                 Console.WriteLine("Message history");
                 Console.ForegroundColor = ConsoleColor.Red;
-                for (int i = 0; i < 10; i++)
+                bool readHistory = true;
+                while (readHistory)
                 {
-                    Console.WriteLine(reader.ReadLine());
+                    var readLine = reader.ReadLine();
+                    if (readLine != "!")
+                    { 
+                        Console.WriteLine(readLine);
+                    }
+                    else
+                    {
+                        readHistory = false;
+                    }
+
                 }
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("End message history");
@@ -110,6 +120,7 @@ namespace Client
                 
 
                 bool clientAlive = true;
+                int counter = 0;
                 while (clientAlive)
                 {
                     if (readingtask.Status == TaskStatus.RanToCompletion)
@@ -119,12 +130,16 @@ namespace Client
                         clientAlive = false;
                         Console.WriteLine("Auto Disconnect");
                     }
+                    Thread.Sleep(100);
+                    counter++;
+                    if (counter == 100) clientAlive = false;
                 }
 
                 Console.WriteLine("Contunue? Press Enter");
                 Console.ReadLine();
                 ts.Cancel();
-
+                client.Close();
+                client.Dispose();
             }
         }
     }

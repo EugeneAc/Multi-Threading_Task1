@@ -15,7 +15,7 @@ namespace Server
     class Program
     {
         /// <summary>
-        /// Class contains Task + Cancellation Token to stop Task when client disconnected
+        /// Nested class contains Task + Cancellation Token to stop Task when client disconnected
         /// and start new task
         /// </summary>
         class PipeServer
@@ -25,7 +25,7 @@ namespace Server
 
             public PipeServer(Task task, CancellationTokenSource token)
             {
-                ServerTask=  task;
+                ServerTask = task;
                 CancellationToken = token;
             }
         }
@@ -40,15 +40,15 @@ namespace Server
                 var ts = new CancellationTokenSource();
                 CancellationToken ct = ts.Token;
                 var task = Task.Factory.StartNew(StartServer, ct);
-                _servers[i]= new PipeServer(task, ts);
+                _servers[i] = new PipeServer(task, ts);
             }
-            
+
             //find finished task and restart
             while (true)
             {
                 for (int i = 0; i < _serverThreads; i++)
                 {
-                    if ((_servers[i].ServerTask)!=null && (_servers[i].ServerTask.Status == TaskStatus.RanToCompletion))
+                    if ((_servers[i].ServerTask) != null && (_servers[i].ServerTask.Status == TaskStatus.RanToCompletion))
                     {
                         _servers[i].CancellationToken.Cancel();
                         Thread.Sleep(250);
@@ -61,9 +61,12 @@ namespace Server
             }
         }
 
-        //server
-        private static BlockingCollection<string> messages = new BlockingCollection<string>() { "hello", "hello 1", "bye", "Luke I am your father", "Star wars", "phone", "random message", "you're dead", "monitor", "mouse" };
-
+        //Message collection
+        private static BlockingCollection<string> messages = new BlockingCollection<string>();
+        //{ "hello", "hello 1", "bye", "Luke I am your father", "Star wars", "phone", "random message", "you're dead", "monitor", "mouse" };
+        /// <summary>
+        /// Server
+        /// </summary>
         static void StartServer()
         {
             NamedPipeServerStream server = new NamedPipeServerStream("PipesOfPiece", PipeDirection.InOut, _serverThreads, PipeTransmissionMode.Message, PipeOptions.Asynchronous);
@@ -84,22 +87,33 @@ namespace Server
             Console.WriteLine(user + " connected");
 
             //sending message history
-            for (int i = 0; i < 10; i++)
+            int maxMessages = 10;
+            if (messages.Count() < maxMessages)
             {
-                try
+                maxMessages = messages.Count();
+            }
+            try
+            {
+                for (int i = 0; i < maxMessages; i++)
                 {
-                    writer.WriteLine(messages.Reverse().ToArray()[i]);
+                    var message = messages.Reverse().ToArray()[maxMessages-i-1];
+                    writer.WriteLine(message);
                     writer.Flush();
                     server.WaitForPipeDrain();
+
+
                 }
-                catch (Exception e) 
-                {
-                    Console.WriteLine(user + " Piper error " +e.Message);
-                }
+                writer.WriteLine("!");//End Message History
+                writer.Flush();
+                server.WaitForPipeDrain();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(user + " Piper error " + e.Message);
             }
 
-            int messagesCount; //variable to check for new messages
 
+            int messagesCount; //variable to check for new messages
             //start reading task
             var ts = new CancellationTokenSource();
             CancellationToken ct = ts.Token;
@@ -148,7 +162,7 @@ namespace Server
 
                     //randomly kill server
                     Random rnd = new Random();
-                    if (rnd.Next(1,25) == 10)
+                    if (rnd.Next(1, 50) == 10)
                     {
                         writer.WriteLine("Server Over");
                         writer.Flush();
