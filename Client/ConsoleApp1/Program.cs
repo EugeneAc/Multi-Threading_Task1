@@ -86,14 +86,14 @@ namespace Client
                             }
                             else
                             {
-                                reader.Close();
+                                reader.Close();//close stream when "Server Over"
                             }
                         }
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine("Server error :" + e.Message);
-                        client.Dispose();
+                        client.Dispose(); // close stream when server error
                     }
                     Console.WriteLine("Reading Over");
                 }, ct);
