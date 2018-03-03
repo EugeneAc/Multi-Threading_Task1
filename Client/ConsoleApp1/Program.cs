@@ -13,9 +13,16 @@ namespace Client
 {
     class Program
     {
-        private static string[] clientmessages = new string[] { "hello", "hello 1", "bye", "Luke I am your father", "Star wars", "phone", "random message", "you're dead", "monitor", "mouse" };
-        private static Random rnd = new Random();
-        //client
+        /// <summary>
+        /// The _clientmessages array
+        /// </summary>
+        private static string[] _clientmessages = { "hello", "hello 1", "bye", "Luke I am your father", "Star wars", "phone", "random message", "you're dead", "monitor", "mouse" };
+
+        /// <summary>
+        /// The randomizer
+        /// </summary>
+        private static Random _rnd = new Random();
+        
         static void Main(string[] args)
         {
 
@@ -23,15 +30,20 @@ namespace Client
             Console.ReadLine();
         }
 
+        /// <summary>
+        /// The client.
+        /// </summary>
         private static void Client()
         {
             while (true)
             {
-                //Client
-                NamedPipeClientStream client =
-                    new NamedPipeClientStream(".", "PipesOfPiece",
-                        PipeDirection.InOut, PipeOptions.Asynchronous,
-                        TokenImpersonationLevel.Delegation);
+                // Client
+                NamedPipeClientStream client = new NamedPipeClientStream(
+                    ".",
+                    "PipesOfPiece",
+                    PipeDirection.InOut,
+                    PipeOptions.Asynchronous,
+                    TokenImpersonationLevel.Delegation);
                 Console.WriteLine("Connecting to server...\n");
                 client.Connect();
                 StreamReader reader = new StreamReader(client);
@@ -39,7 +51,7 @@ namespace Client
 
                 Console.WriteLine(reader.ReadLine());
 
-                var username = "Username" + rnd.Next(10);
+                var username = "Username" + _rnd.Next(10);
                 writer.WriteLine(username);
                 writer.Flush();
                 Console.WriteLine("Connected with name " + username);
@@ -65,7 +77,7 @@ namespace Client
                 Console.WriteLine("End message history");
                 Console.WriteLine("");
 
-                //strart reading task
+                // strart reading task
                 var ts = new CancellationTokenSource();
                 CancellationToken ct = ts.Token;
                 var readingtask = Task.Factory.StartNew(() =>
@@ -86,7 +98,7 @@ namespace Client
                             }
                             else
                             {
-                                reader.Close();//close stream when "Server Over"
+                                reader.Close();// close stream when "Server Over"
                             }
                         }
                     }
@@ -98,15 +110,15 @@ namespace Client
                     Console.WriteLine("Reading Over");
                 }, ct);
 
-                //sending random messages
+                // sending random messages
                 Console.WriteLine("");
                 Thread.Sleep(1000);
                 try
                 {
-                    for (int i = 0; i < rnd.Next(2, 10); i++)
+                    for (int i = 0; i < _rnd.Next(2, 10); i++)
                     {
-                        Thread.Sleep(rnd.Next(100, 1000));
-                        string phrase = username + " says: " + clientmessages[rnd.Next(10)];
+                        Thread.Sleep(_rnd.Next(100, 1000));
+                        string phrase = username + " says: " + _clientmessages[_rnd.Next(10)];
                         Console.WriteLine(phrase);
                         writer.WriteLine(phrase);
                         writer.Flush();

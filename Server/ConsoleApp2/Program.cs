@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,7 +16,7 @@ namespace Server
         /// Nested class contains Task + Cancellation Token to stop Task when client disconnected
         /// and start new task
         /// </summary>
-        class PipeServer
+        private class PipeServer
         {
             public Task ServerTask { get; private set; }
             public CancellationTokenSource CancellationToken { get; private set; }
@@ -30,11 +28,25 @@ namespace Server
             }
         }
 
+        /// <summary>
+        /// The number of server threads.
+        /// </summary>
         private static int _serverThreads = 5;
+
+        /// <summary>
+        /// The servers array
+        /// </summary>
         private static PipeServer[] _servers = new PipeServer[_serverThreads];
+        
+        /// <summary>
+        /// Message collection
+        /// </summary>
+        private static BlockingCollection<string> _messages = new BlockingCollection<string>();
+
         static void Main(string[] args)
         {
-            //start server tasks
+
+            // start server tasks
             for (int i = 0; i < _serverThreads; i++)
             {
                 var ts = new CancellationTokenSource();
@@ -43,7 +55,7 @@ namespace Server
                 _servers[i] = new PipeServer(task, ts);
             }
 
-            //find finished task and restart
+            // find finished task and restart
             while (true)
             {
                 for (int i = 0; i < _serverThreads; i++)
@@ -61,11 +73,8 @@ namespace Server
             }
         }
 
-        //Message collection
-        private static BlockingCollection<string> messages = new BlockingCollection<string>();
-        //{ "hello", "hello 1", "bye", "Luke I am your father", "Star wars", "phone", "random message", "you're dead", "monitor", "mouse" };
         /// <summary>
-        /// Server
+        /// Server task
         /// </summary>
         static void StartServer()
         {
@@ -88,15 +97,15 @@ namespace Server
 
             //sending message history
             int maxMessages = 10;
-            if (messages.Count() < maxMessages)
+            if (_messages.Count() < maxMessages)
             {
-                maxMessages = messages.Count();
+                maxMessages = _messages.Count();
             }
             try
             {
                 for (int i = 0; i < maxMessages; i++)
                 {
-                    var message = messages.Reverse().ToArray()[maxMessages-i-1];
+                    var message = _messages.Reverse().ToArray()[maxMessages-i-1];
                     writer.WriteLine(message);
                     writer.Flush();
                     server.WaitForPipeDrain();
@@ -113,8 +122,8 @@ namespace Server
             }
 
 
-            int messagesCount; //variable to check for new messages
-            //start reading task
+            int messagesCount; // variable to check for new _messages
+            // start reading task
             var ts = new CancellationTokenSource();
             CancellationToken ct = ts.Token;
             Task.Factory.StartNew(() =>
@@ -126,9 +135,9 @@ namespace Server
                         var line = reader.ReadLine();
                         if (!String.IsNullOrEmpty(line))
                         {
-                            messages.TryAdd(line);
+                            _messages.TryAdd(line);
                             Console.WriteLine(line);
-                            messagesCount = messages.Count();
+                            messagesCount = _messages.Count();
                         }
                         else
                         {
@@ -139,24 +148,25 @@ namespace Server
                 catch (Exception e)
                 {
                     Console.WriteLine(user + " Pipe error " + e.Message);
-                }
-            }, ct);
+                        }
+                    },
+                ct);
 
-            //start whatching for new messages
-            messagesCount = messages.Count();
+            // start whatching for new _messages
+            messagesCount = _messages.Count();
             try
             {
                 while (true)
                 {
-                    if (messages.Count() > messagesCount)
+                    if (_messages.Count() > messagesCount)
                     {
-                        for (int i = messagesCount; i < messages.Count; i++)
+                        for (int i = messagesCount; i < _messages.Count; i++)
                         {
-                            writer.WriteLine(messages.ToArray()[i]);
+                            writer.WriteLine(_messages.ToArray()[i]);
                             writer.Flush();
                         }
                         server.WaitForPipeDrain();
-                        messagesCount = messages.Count();
+                        messagesCount = _messages.Count();
                     }
                     Thread.Sleep(1000);
 
