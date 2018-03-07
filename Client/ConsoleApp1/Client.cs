@@ -69,7 +69,7 @@ namespace ConsoleApp1
             // sending random messages
             Console.WriteLine(string.Empty);
             Thread.Sleep(500);
-                for (int i = 0; i < _rnd.Next(2, 10); i++)
+                for (int i = 0; i < _rnd.Next(30, 50); i++)
                 {
                     Thread.Sleep(_rnd.Next(100, 2000));
                     this.SendMessage(this.clientmessages[this._rnd.Next(10)]);

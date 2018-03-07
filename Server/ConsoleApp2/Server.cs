@@ -62,6 +62,7 @@ namespace ConsoleApp2
             catch (Exception e)
             {
                 Console.WriteLine(" Pipe error " + e.Message);
+                this._reader.Close();
             }
         }
 

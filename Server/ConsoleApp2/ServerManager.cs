@@ -46,14 +46,14 @@
             }
         }
 
-        public string[] GetMessageHistory(int maxMessages)
+        public string[] GetMessageHistory(int messageNum)
         {
-            if (this._messages.Count() < maxMessages)
+            if (this._messages.Count() < messageNum)
             {
-                maxMessages = this._messages.Count();
+                messageNum = this._messages.Count();
             }
 
-            var messages = this._messages.Skip(Math.Max(0, this._messages.Count() - maxMessages));
+            var messages = this._messages.Skip(Math.Max(0, this._messages.Count() - messageNum));
             return messages.ToArray();
         }
 
