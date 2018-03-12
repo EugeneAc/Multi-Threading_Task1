@@ -1,14 +1,7 @@
-﻿using System;
-using System.IO;
-using System.IO.Pipes;
-using System.Security.Principal;
-using System.Threading;
-using System.Threading.Tasks;
-
-
+﻿
 namespace Client
 {
-    using ConsoleApp1;
+    using System;
 
     class Program
     {

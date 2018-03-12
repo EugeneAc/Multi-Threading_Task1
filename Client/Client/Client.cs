@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ConsoleApp1
+﻿
+namespace Client
 {
+    using System;
+    using System.Threading.Tasks;
     using System.IO;
     using System.IO.Pipes;
     using System.Security.Principal;
@@ -27,39 +24,39 @@ namespace ConsoleApp1
 
         public Client(string userName)
         {
-            Task.Factory.StartNew(this.StartClient,userName);
+            Task.Factory.StartNew(StartClient,userName);
             
         }
 
         private void StartClient(object userName)
         {
-            this._client = new NamedPipeClientStream(
+            _client = new NamedPipeClientStream(
                 ".",
                 "PipesOfPiece",
                 PipeDirection.InOut,
                 PipeOptions.Asynchronous,
                 TokenImpersonationLevel.Delegation);
             Console.WriteLine("Connecting to server...\n");
-            this._client.Connect();
-            this._reader = new StreamReader(this._client);
-            this._writer = new StreamWriter(this._client);
+            _client.Connect();
+            _reader = new StreamReader(_client);
+            _writer = new StreamWriter(_client);
 
-            Console.WriteLine(this._reader.ReadLine());
+            Console.WriteLine(_reader.ReadLine());
 
-            this._userName = (string)userName;
-            this._writer.WriteLine(this._userName);
-            this._writer.Flush();
-            Console.WriteLine("Connected with name " + this._userName);
-            this._client.WaitForPipeDrain();
-            this.ReadHistory();
+            _userName = (string)userName;
+             _writer.WriteLine(_userName);
+            _writer.Flush();
+            Console.WriteLine("Connected with name " + _userName);
+            _client.WaitForPipeDrain();
+            ReadHistory();
 
-            Task.Factory.StartNew(this.StartListening);
-            this.StartSendingMessages();
+            Task.Factory.StartNew(StartListening);
+            StartSendingMessages();
             Console.WriteLine("Type new message OR Press Enter to Finish");
             var message = Console.ReadLine();
             while (!string.IsNullOrEmpty(message))
             { 
-                this.SendMessage(message);
+                SendMessage(message);
                 message = Console.ReadLine();
             }
         }
@@ -72,19 +69,19 @@ namespace ConsoleApp1
                 for (int i = 0; i < _rnd.Next(30, 50); i++)
                 {
                     Thread.Sleep(_rnd.Next(100, 2000));
-                    this.SendMessage(this.clientmessages[this._rnd.Next(10)]);
+                    SendMessage(clientmessages[_rnd.Next(10)]);
                 }
         }
 
         private void SendMessage(string message)
         {
-            string phrase = this._userName + " says: " + message;
+            string phrase = _userName + " says: " + message;
             try
             {
                 Console.WriteLine(phrase);
-                this._writer.WriteLine(phrase);
-                this._writer.Flush();
-                this._client.WaitForPipeDrain();
+                _writer.WriteLine(phrase);
+                _writer.Flush();
+                _client.WaitForPipeDrain();
             }
             catch (Exception e)
             {
@@ -100,7 +97,7 @@ namespace ConsoleApp1
             bool readHistory = true;
             while (readHistory)
             {
-                var readLine = this._reader.ReadLine();
+                var readLine = _reader.ReadLine();
                 if (readLine != "!")
                 {
                     Console.WriteLine(readLine);
@@ -122,7 +119,7 @@ namespace ConsoleApp1
             {
                 while (continueRead)
                 {
-                    var line = this._reader.ReadLine();
+                    var line = _reader.ReadLine();
 
                     if (line == "Server Over")
                     {
@@ -135,16 +132,16 @@ namespace ConsoleApp1
                     }
                     else
                     {
-                        this._reader.Close(); // close stream when "Server Over"
-                        this._client.Dispose();
+                        _reader.Close(); // close stream when "Server Over"
+                        _client.Dispose();
                     }
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine("Server error :" + e.Message);
-                this._client.Close();
-                this._client.Dispose(); // close stream when server error
+                _client.Close();
+                _client.Dispose(); // close stream when server error
             }
             Console.WriteLine("Reading Over");
         }

@@ -1,5 +1,5 @@
 ﻿
-namespace ConsoleApp2
+namespace Server
 {
     using System;
     using System.IO;
@@ -33,12 +33,12 @@ namespace ConsoleApp2
 
         public Server(NamedPipeServerStream server, ServerManager manager)
         {
-            this._server = server;
-            this._serverManager = manager;
-            this._writer = new StreamWriter(server);
-            this._reader = new StreamReader(server);
+            _server = server;
+            _serverManager = manager;
+            _writer = new StreamWriter(server);
+            _reader = new StreamReader(server);
             Console.WriteLine("Waiting for connetion...  ");
-            this._server.BeginWaitForConnection(new AsyncCallback(this.ConnectionCallback), _server);
+            _server.BeginWaitForConnection(new AsyncCallback(ConnectionCallback), _server);
         }
 
         private void LinteningStream()
@@ -47,67 +47,67 @@ namespace ConsoleApp2
             {
                 while (true)
                 {
-                    var line = this._reader.ReadLine();
+                    var line = _reader.ReadLine();
                     if (!string.IsNullOrEmpty(line))
                     {
-                        this.NewMessageReceived?.Invoke(this, new NewMessageEventArgs { Message = line, User = this.ConnectedUserName});
+                        NewMessageReceived?.Invoke(this, new NewMessageEventArgs { Message = line, User = ConnectedUserName});
                         Console.WriteLine(line);
                     }
                     else
                     {
-                        this._reader.Close();
+                        _reader.Close();
                     }
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine(" Pipe error " + e.Message);
-                this._reader.Close();
+                _reader.Close();
             }
         }
 
         private void KillServer()
         {
-            this.SendMessage("Server Over");
+            SendMessage("Server Over");
         }
 
         public async void SendMessage(string message)
         {
             try
             {
-                await this._writer.WriteLineAsync(message);
-                this._writer.Flush();
-                this._server.WaitForPipeDrain();
+                await _writer.WriteLineAsync(message);
+                _writer.Flush();
+                _server.WaitForPipeDrain();
 
                 if (message == "Server Over")
                 {
-                    this._server.Close();
-                    this._server.Dispose();
+                    _server.Close();
+                    _server.Dispose();
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine(this.ConnectedUserName + " Disconnected");
-                this._server.Close();
-                this._server.Dispose();
+                Console.WriteLine(ConnectedUserName + " Disconnected");
+                _server.Close();
+                _server.Dispose();
             }
         }
 
         private void ConnectionCallback(IAsyncResult ar)
         {
-            this._server.EndWaitForConnection(ar);
-            this._serverManager.CreateNewServer();
-            this.ServerThread = Thread.CurrentThread;
-            this._writer.WriteLine("Welcome to server on thread " + this.ServerThread.ManagedThreadId);
-            this._writer.Flush();
-            this._server.WaitForPipeDrain();
+            _server.EndWaitForConnection(ar);
+            _serverManager.CreateNewServer();
+            ServerThread = Thread.CurrentThread;
+            _writer.WriteLine("Welcome to server on thread " + ServerThread.ManagedThreadId);
+            _writer.Flush();
+            _server.WaitForPipeDrain();
 
             Console.WriteLine("Waiting User Name");
-            this.ConnectedUserName = this._reader.ReadLine();
-            Console.WriteLine(this.ConnectedUserName + " connected");
+            ConnectedUserName = _reader.ReadLine();
+            Console.WriteLine(ConnectedUserName + " connected");
 
-            Task.Factory.StartNew(this.LinteningStream);
-            this.SendHistory();
+            Task.Factory.StartNew(LinteningStream);
+            SendHistory();
             while (true)
             {
                 // keep thread alive;
@@ -116,11 +116,11 @@ namespace ConsoleApp2
 
         private void SendHistory()
         {
-           foreach (var t in this._serverManager.GetMessageHistory(10))
+           foreach (var t in _serverManager.GetMessageHistory(10))
                 {
-                    this.SendMessage(t);
+                    SendMessage(t);
                 }
-           this.SendMessage("!"); // End Message History
+           SendMessage("!"); // End Message History
         }
     }
 }
